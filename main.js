@@ -32,48 +32,43 @@ app.get("/", async (req, res) => {
   await con.query(
     "SELECT * FROM shortenedurls ORDER BY id DESC LIMIT 1",
     function (err, result) {
-      if (result === undefined) {
-        var urlShortObjs = { longurl: null, shorturl: null };
-        res.render("index", { urlShortObjs: urlShortObjs });
-      } else {
-        var convertedUrl = result[0].shorturl;
-        var originalUrl = result[0].longurl;
+      if (result.value === undefined) {
+        // var urlShortObjs = { longurl: null, shorturl: null };
+
+        var convertedUrl = result.value;
+        var originalUrl = result.value;
         var urlShortObjs = [{ longurl: originalUrl, shorturl: convertedUrl }];
-        res.render("index", { urlShortObjs: urlShortObjs });
+        res.render("index", { urlShortObjs: [] });
       }
     }
   );
 });
 
-app.post("/urlShort", async (req, res) => {
-  var urlShortObj = {
+app.post("/urlShort", function (req, res) {
+  const urlShortObj = {
     longurl: req.body.fullUrl,
     shorturl: makeid(10),
   };
-  if (urlShortObj === undefined) {
-    var sql = "INSERT INTO shortenedurls SET ? ";
-    con.query(sql, urlShortObj, function (err, result) {
-      if (err) throw err;
-      res.redirect("/");
-    });
-  } else {
-    var urlShortObj = {
-      longurl: req.body.fullUrl,
-      shorturl: makeid(10),
-    };
-    var sql = "INSERT INTO shortenedurls SET ? ";
-    con.query(sql, urlShortObj, function (err, result) {
-      if (err) throw err;
-      res.redirect("/");
-    });
-  }
+
+  var sql = "INSERT INTO shortenedurls SET ? ";
+  con.query(sql, urlShortObj, function (err, result) {
+    if (err) {
+      throw err;
+    }
+    const convertedUrl = urlShortObj.shorturl;
+    const originalUrl = urlShortObj.longurl;
+    const urlShortObjs = [{ longurl: originalUrl, shorturl: convertedUrl }];
+    res.render("index", { urlShortObjs: urlShortObjs });
+  });
 });
 
 app.post("/delete/:shorten", async (req, res) => {
   await con.query(
     "DELETE FROM shortenedurls ORDER BY id DESC LIMIT 1",
     function (err, result) {
-      if (err) throw err;
+      if (err) {
+        throw err;
+      }
       delete urlShortObj;
       res.redirect("/");
     }
